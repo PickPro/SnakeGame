@@ -1,0 +1,238 @@
+#include <iostream>
+#include<fstream>
+#include<string>
+#include<iomanip>
+#include <cstdlib>                                        
+#include <ctime>                                          
+#include <conio.h> //to use _kbhit(),_getch()
+#include <windows.h> //to use system(),Sleep()
+using namespace std;
+char again;
+int bestscore = 0, i = 1;
+bool Over; // Flag to end the game
+const int Width = 30, Height = 15;
+const int Area = Width*Height;
+int headX, headY, fruitX, fruitY, score, level; // Coordinates of snakes head,fruit and score counter
+int direction; // store current direction
+int tailX[Area], tailY[Area], tailLength = 0, slowDown = 150;   // slow down snake movement
+
+void Setup()
+{
+	Over = false;
+
+	direction = 5;
+	headX = Width/2;  // Starting from middle
+	headY = Height / 2;
+	srand(time(NULL));  // Random position of fruit
+	fruitX = 1 + rand() % Width;
+	fruitY = 1 + rand() % Height;
+	score = 0;
+	level = 1;
+}
+
+void Draw()     // Drawing the content into console window
+{
+	system("cls");    // Clear the console window
+	cout << "W,S,A,D are the arrows keys. \nPress X to end the game.\n" << endl;
+	for (int i = 0; i<Height + 2; i++)   // Iterate through rows of console window
+	{
+		for (int j = 0; j<Width + 2; j++)   // Iterate through columns of console window
+		{
+			if (i == 0 || i == Height + 1 || j == 0 || j == Width + 1)      // borders
+				cout << '#';
+			else if (j == headX && i == headY)   // snakes head
+				cout << 'O';
+			else if (j == fruitX && i == fruitY)  // fruit
+				cout << '@';
+			else
+			{
+				bool tailPrint = false;
+				for (int k = 1; k <= tailLength; k++)
+				{
+					if (j == tailX[k] && i == tailY[k]) // Draw snakes tail
+					{
+						cout << 'o';
+						tailPrint = true;
+					}
+				}
+				if (!tailPrint)  // Draw empty spaces
+					cout << ' ';
+			}
+		}
+		cout << endl;
+	}
+	cout << endl << "Score: " << score << endl;
+	cout << endl << "Level: " << level << endl;
+}
+
+void Input()                       // Getting input from user
+{
+	if (_kbhit())                   // If key on keyboard is pressed
+	{
+		switch (_getch())           // Make a decision based on which key is pressed
+		{
+		case 'a':
+			direction = 1;
+			break;
+		case 's':
+			direction = 2;
+			break;
+		case 'w':
+			direction = 3;
+			break;
+		case 'd':
+			direction = 4;
+			break;
+		case 'x':
+			Over = true;
+			break;
+		}
+	}
+}
+
+void Logic()                          // Controlling the movement of snake
+{
+	tailX[0] = headX;
+	tailY[0] = headY;
+	for (int i = tailLength; i > 0; i--)   // Moving each tail segment into next position
+	{
+		tailX[i] = tailX[i - 1];
+		tailY[i] = tailY[i - 1];
+	}
+
+	switch (direction)                 // Move snakes head based on currently pressed key
+	{
+	case 1:
+		headX--;
+		break;
+	case 4:
+		headX++;
+		break;
+	case 3:
+		headY--;
+		break;
+	case 2:
+		headY++;
+		break;
+	}
+
+	if (headX <= 0)                        // Ability to warp between upper/lower and left/right wall
+	{
+		headX = Width;
+		/*Over = true;*/
+	}
+	else if (headX >= Width + 1)
+	{
+		headX = 1;
+		/*Over = true;*/
+	}
+		
+	else if (headY <= 0)
+	{
+		headY = Height;
+	/*	Over = true;*/
+	}
+	else if (headY >= Height + 1)
+	{
+		headY = 1;
+		/*Over = true;*/
+	}
+		
+
+	if (headX == fruitX && headY == fruitY)  // If fruit has been eaten
+	{
+		score++;
+
+
+		srand(time(NULL));              // Generate new fruit position
+		fruitX = 1 + rand() % Width;
+		fruitY = 1 + rand() % Height;
+		tailLength++;                   // Add a new tail segment
+		if (score % 5 == 0)
+		{
+			level++;
+			slowDown = slowDown - 15;
+		}
+		else if (slowDown > 0)                  // Speed up snake a little
+			slowDown--;
+
+
+
+
+	}
+
+	for (int j = 1; j <= tailLength; j++)    // Detect collision with tail
+	{
+		if (headX == tailX[j] && headY == tailY[j])
+			Over = true;
+
+	}
+
+}
+void file1()
+{
+	string outname;
+
+	string names;
+	ofstream nfile;
+	nfile.open("namefile.txt", ios::app);
+	cout << "Enter Your Name: ";
+	getline(cin, names);
+	nfile <<"Name: "<< names; 
+}
+void file()
+{
+	
+	ofstream n2file;
+	n2file.open("namefile.txt", ios::app);
+	//cout << "Your Score: ";
+	//cin >> score; //we will assign the score to this variable.
+	n2file << setw(15) <<"Score: "<< score << endl;
+	/*cout << endl;*/
+	n2file.close();
+	string value;
+	n2file.open("scorefile.txt", ios::app);
+
+	n2file << "Best Score: "; /*<< best;*/
+
+
+}
+int live = 3;
+int main()
+{
+
+
+	file1();
+	Setup();             // Initialization of variables
+	while (!Over)
+	{
+		Draw();          // Drawing the content into console window
+		Input();         // Getting input from user
+		Logic();         // Controlling the movement of snake
+		Sleep(slowDown); // Slowing down the snakes movement
+	}
+	
+		
+		cout << "\tGame over" << endl;
+		file();
+		/*cout << "'N' to check the the Highest Score" << endl;*/
+		cout << "Enter 'H' to See Players History" << endl;
+		cin >> again;
+		
+	
+	string history;
+	if (again == 'h' || again == 'H')
+	{
+		ifstream his;
+		his.open("namefile.txt");
+		while (!his.eof())
+		{
+			getline(his, history);
+			cout << history << endl;
+		}
+
+	}
+
+	system("pause");
+	return 0;
+}
